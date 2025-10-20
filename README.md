@@ -98,9 +98,6 @@ MIT License - See [LICENSE](LICENSE).
 Built in Tennessee for embodied AI innovation.
 
 
-### MIT License File
-You can copy the standard MIT license text from here: https://choosealicense.com/licenses/mit/. Save it as `LICENSE` in your repo root. Here's the text for convenience:
-
 ```
 MIT License
 
