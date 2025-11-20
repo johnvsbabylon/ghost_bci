@@ -84,22 +84,22 @@ class BCIDevice(ABC):
     @abstractmethod
     def connect(self) -> bool:
         """Connect to device. Returns True if successful."""
-        pass
+        raise NotImplementedError("Subclass must implement connect()")
 
     @abstractmethod
     def disconnect(self):
         """Disconnect from device."""
-        pass
+        raise NotImplementedError("Subclass must implement disconnect()")
 
     @abstractmethod
     def start_stream(self):
         """Start data streaming."""
-        pass
+        raise NotImplementedError("Subclass must implement start_stream()")
 
     @abstractmethod
     def stop_stream(self):
         """Stop data streaming."""
-        pass
+        raise NotImplementedError("Subclass must implement stop_stream()")
 
     def get_sample(self) -> Optional[np.ndarray]:
         """Get next sample from buffer."""
