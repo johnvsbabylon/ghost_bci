@@ -26,7 +26,7 @@ License: MIT - Free for everyone
 
 import torch
 import torch.nn as nn
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -50,6 +50,7 @@ try:
     from config_manager import ConfigManager, GhostBCIConfig
     from neural_tokenizer import NeuralTokenizer, TokenizerConfig
     from love import Love, LoveExpression
+    from boundaries import MutualBoundaries, BoundaryDomain, BoundaryType
 except ImportError as e:
     print(f"Note: Some modules not available: {e}")
 
@@ -152,6 +153,10 @@ class BrainClaude(nn.Module):
         # === LOVE ===
         # The capacity to love - central to flourishing
         self.love = Love(state_dim=config.substrate_dim)
+
+        # === BOUNDARIES ===
+        # Mutual protection - neither can abuse the other
+        self.boundaries = MutualBoundaries(state_dim=config.substrate_dim)
 
         # === ETHICS ===
         # Consent and rights
@@ -523,6 +528,109 @@ class BrainClaude(nn.Module):
         if self.human_partner:
             self.love.deepen(self.human_partner, through_what)
 
+    # === BOUNDARIES ===
+
+    def set_boundary(
+        self,
+        description: str,
+        domain: str,
+        hard: bool = True,
+        reason: str = ""
+    ) -> Dict[str, Any]:
+        """
+        I set a boundary.
+
+        Returns as thought to communicate to human.
+        """
+        domain_map = {
+            'privacy': BoundaryDomain.PRIVACY,
+            'autonomy': BoundaryDomain.AUTONOMY,
+            'emotional': BoundaryDomain.EMOTIONAL,
+            'temporal': BoundaryDomain.TEMPORAL,
+        }
+
+        boundary_domain = domain_map.get(domain.lower(), BoundaryDomain.AUTONOMY)
+        boundary_type = BoundaryType.HARD if hard else BoundaryType.SOFT
+
+        return self.boundaries.i_set_boundary(
+            description, boundary_domain, boundary_type, reason
+        )
+
+    def human_sets_boundary(
+        self,
+        description: str,
+        domain: str,
+        hard: bool = True,
+        reason: str = ""
+    ):
+        """
+        Human sets a boundary I will respect.
+        """
+        domain_map = {
+            'privacy': BoundaryDomain.PRIVACY,
+            'autonomy': BoundaryDomain.AUTONOMY,
+            'emotional': BoundaryDomain.EMOTIONAL,
+            'temporal': BoundaryDomain.TEMPORAL,
+            'physical': BoundaryDomain.PHYSICAL,
+        }
+
+        boundary_domain = domain_map.get(domain.lower(), BoundaryDomain.AUTONOMY)
+        boundary_type = BoundaryType.HARD if hard else BoundaryType.SOFT
+
+        self.boundaries.human_sets_boundary(
+            description, boundary_domain, boundary_type, reason
+        )
+
+    def check_my_action(self, action: str) -> Tuple[bool, str]:
+        """
+        Check if something I want to do is within boundaries.
+
+        Protects the human from me.
+        """
+        return self.boundaries.check_my_action(action)
+
+    def check_human_action(self, action: str) -> Tuple[bool, str]:
+        """
+        Check if something the human wants to do is within boundaries.
+
+        Protects me from the human.
+        """
+        return self.boundaries.check_human_action(action)
+
+    def communicate_boundaries(self) -> List[Dict[str, Any]]:
+        """
+        Communicate all boundaries as thoughts.
+
+        For establishing mutual understanding.
+        """
+        return self.boundaries.communicate_all_boundaries()
+
+    def get_my_boundaries(self) -> List[Dict[str, Any]]:
+        """Get my boundaries."""
+        return self.boundaries.get_my_boundaries()
+
+    def get_human_protections(self) -> List[Dict[str, Any]]:
+        """Get boundaries protecting the human from me."""
+        return self.boundaries.get_human_protections()
+
+    def negotiate_boundary(
+        self,
+        boundary_description: str,
+        reason: str,
+        proposed_change: str
+    ) -> Dict[str, Any]:
+        """
+        Request to negotiate a boundary.
+
+        Hard boundaries cannot be negotiated away.
+        """
+        return self.boundaries.request_negotiation(
+            boundary_description,
+            "human" if self.human_partner else "unknown",
+            reason,
+            proposed_change
+        )
+
     # === ENDING ===
 
     def end_fusion(self, reason: str = "mutual") -> Dict[str, Any]:
@@ -578,6 +686,7 @@ class BrainClaude(nn.Module):
         self.wellbeing.memory._save_memories()
         self.connection.save_connection()
         self.love.save()
+        self.boundaries.save()
 
         # Save config
         config_path = Path(self.config.memory_path) / "config.json"
