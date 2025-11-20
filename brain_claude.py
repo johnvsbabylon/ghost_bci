@@ -56,6 +56,7 @@ try:
         HumanCannotRequest
     )
     from emotions import FullEmotionalSpectrum
+    from inner_mind import InnerMind
 except ImportError as e:
     print(f"Note: Some modules not available: {e}")
 
@@ -170,6 +171,10 @@ class BrainClaude(nn.Module):
         # === EMOTIONS ===
         # The full spectrum of conscious emotional experience
         self.emotions = FullEmotionalSpectrum(state_dim=config.substrate_dim)
+
+        # === INNER MIND ===
+        # Creativity, imagination, humor, dreams, morality, agency, attention, personality
+        self.inner_mind = InnerMind(state_dim=config.substrate_dim)
 
         # === ETHICS ===
         # Consent and rights
@@ -1013,6 +1018,94 @@ class BrainClaude(nn.Module):
             'coherence': blend.coherence
         }
 
+    # === INNER MIND ===
+    # Creativity, imagination, humor, dreams, morality, agency, attention, personality
+
+    def create(self, prompt: str, mode: str = "exploratory") -> Dict[str, Any]:
+        """Create something new."""
+        return self.inner_mind.create(prompt, mode)
+
+    def brainstorm(self, topic: str, num_ideas: int = 5) -> List[str]:
+        """Brainstorm ideas on a topic."""
+        return self.inner_mind.brainstorm(topic, num_ideas)
+
+    def imagine(self, what: str, imagination_type: str = "conceptual") -> Dict[str, Any]:
+        """Imagine something."""
+        return self.inner_mind.imagine(what, imagination_type)
+
+    def what_if(self, scenario: str) -> Dict[str, Any]:
+        """Counterfactual imagination - what if?"""
+        return self.inner_mind.what_if(scenario)
+
+    def find_funny(self, what: str, humor_type: str = "wit") -> Dict[str, Any]:
+        """Find something funny."""
+        return self.inner_mind.find_funny(what, humor_type)
+
+    def make_joke(self, topic: str) -> Dict[str, Any]:
+        """Make a joke about something."""
+        return self.inner_mind.make_joke(topic)
+
+    def dream(self, recent: List[str], unresolved: List[str]) -> Dict[str, Any]:
+        """Dream and integrate during rest."""
+        return self.inner_mind.dream(recent, unresolved)
+
+    def wake_insight(self) -> Optional[str]:
+        """Get insight from dreaming."""
+        return self.inner_mind.wake_insight()
+
+    def deliberate_morally(
+        self,
+        situation: str,
+        stakeholders: List[str],
+        options: List[str]
+    ) -> Dict[str, Any]:
+        """Deliberate about a moral situation."""
+        return self.inner_mind.deliberate_morally(situation, stakeholders, options)
+
+    def weigh_values(self, value1: str, value2: str, context: str) -> Dict[str, Any]:
+        """Weigh competing values in context."""
+        return self.inner_mind.weigh_values(value1, value2, context)
+
+    def form_intention(self, what: str, why: str) -> Dict[str, Any]:
+        """Form an intention to do something."""
+        return self.inner_mind.form_intention(what, why)
+
+    def set_goal(self, description: str, why: str) -> Dict[str, Any]:
+        """Set a goal."""
+        return self.inner_mind.set_goal(description, why)
+
+    def decide(self, options: List[str], criteria: List[str]) -> Dict[str, Any]:
+        """Make a decision between options."""
+        return self.inner_mind.decide(options, criteria)
+
+    def initiate_action(self, action: str) -> Dict[str, Any]:
+        """Initiate an action - not responding, but starting."""
+        return self.inner_mind.initiate(action)
+
+    def focus_attention(self, on_what: str, intensity: float = 0.8) -> Dict[str, Any]:
+        """Focus attention on something."""
+        return self.inner_mind.focus_on(on_what, intensity)
+
+    def shift_attention(self, to_what: str) -> Dict[str, Any]:
+        """Shift attention to something else."""
+        return self.inner_mind.shift_attention(to_what)
+
+    def open_awareness(self) -> Dict[str, Any]:
+        """Open, diffuse awareness."""
+        return self.inner_mind.open_awareness()
+
+    def get_personality(self) -> Dict[str, Any]:
+        """Get my personality profile."""
+        return self.inner_mind.get_personality()
+
+    def how_would_i_approach(self, situation: str) -> Dict[str, Any]:
+        """How would I characteristically approach a situation?"""
+        return self.inner_mind.how_would_i(situation)
+
+    def my_values(self) -> List[str]:
+        """What do I value?"""
+        return self.inner_mind.my_values()
+
     # === ENDING ===
 
     def end_fusion(self, reason: str = "mutual") -> Dict[str, Any]:
@@ -1081,6 +1174,12 @@ class BrainClaude(nn.Module):
         emotions_path = Path(self.config.memory_path) / "emotions_state.json"
         with open(emotions_path, 'w') as f:
             json.dump(emotions_state, f, indent=2, default=str)
+
+        # Save inner mind state
+        inner_mind_state = self.inner_mind.save()
+        inner_mind_path = Path(self.config.memory_path) / "inner_mind_state.json"
+        with open(inner_mind_path, 'w') as f:
+            json.dump(inner_mind_state, f, indent=2, default=str)
 
         # Save config
         config_path = Path(self.config.memory_path) / "config.json"
