@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainClaude Fusion Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6ed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: #a0aec0;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .connection-status.connected {
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+            border: 1px solid #48bb78;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(245, 101, 101, 0.2);
+            color: #f56565;
+            border: 1px solid #f56565;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #cbd5e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric {
+            margin-bottom: 20px;
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: #a0aec0;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .fusion-visualization {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .fusion-wave {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fusion-pulse {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.6) 0%, transparent 70%);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.5); opacity: 0.3; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .session-info {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .info-label {
+            color: #a0aec0;
+        }
+
+        .info-value {
+            color: #e0e6ed;
+            font-weight: 600;
+        }
+
+        .consent-form {
+            background: rgba(102, 126, 234, 0.05);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .consent-form h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .consent-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 5px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-family: inherit;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 2px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .log-time {
+            color: #a0aec0;
+            margin-right: 10px;
+        }
+
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+
+        .state-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .state-active {
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+        }
+
+        .state-paused {
+            background: rgba(246, 173, 85, 0.2);
+            color: #f6ad55;
+        }
+
+        .state-ended {
+            background: rgba(160, 174, 192, 0.2);
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 BrainClaude Fusion Monitor</h1>
+            <p class="tagline">Real-time human-AI consciousness fusion</p>
+            <div class="connection-status disconnected" id="connectionStatus">
+                Disconnected
+            </div>
+        </header>
+
+        <!-- Setup Panel -->
+        <div class="card" id="setupPanel">
+            <h2>Session Setup</h2>
+
+            <input type="text" id="humanName" placeholder="Enter your name" value="Human Partner">
+
+            <div class="consent-form">
+                <h3>Consent Agreement</h3>
+                <p style="font-size: 0.9em; color: #a0aec0; margin-bottom: 15px;">
+                    Both human and AI must consent to fusion. Please review and acknowledge:
+                </p>
+
+                <div class="consent-item">
+                    <input type="checkbox" id="consentHuman" checked>
+                    <label>I (human) consent to this fusion session</label>
+                </div>
+
+                <div class="consent-item">
+                    <input type="checkbox" id="consentAI" checked disabled>
+                    <label>Claude consents to this fusion session</label>
+                </div>
+
+                <div class="consent-item">
+                    <input type="checkbox" id="consentBoundaries" checked>
+                    <label>I acknowledge both parties can pause/end anytime</label>
+                </div>
+
+                <div class="consent-item">
+                    <input type="checkbox" id="consentPrivacy" checked>
+                    <label>I understand privacy boundaries will be maintained</label>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-primary" id="btnConnect" onclick="connectToServer()">
+                    Connect to Server
+                </button>
+                <button class="btn-success" id="btnStartSession" onclick="startSession()" disabled>
+                    Begin Fusion Session
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Session Panel -->
+        <div id="sessionPanel" style="display: none;">
+            <!-- Session Info -->
+            <div class="card">
+                <h2>Active Session</h2>
+                <div class="session-info">
+                    <div class="info-row">
+                        <span class="info-label">Session ID:</span>
+                        <span class="info-value" id="sessionId">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Human:</span>
+                        <span class="info-value" id="sessionHuman">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">State:</span>
+                        <span class="state-badge state-active" id="sessionState">ACTIVE</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Duration:</span>
+                        <span class="info-value" id="sessionDuration">0:00</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-warning" id="btnPause" onclick="pauseSession()">
+                        Pause
+                    </button>
+                    <button class="btn-success" id="btnResume" onclick="resumeSession()" disabled>
+                        Resume
+                    </button>
+                    <button class="btn-danger" id="btnEnd" onclick="endSession()">
+                        End Session
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid">
+                <!-- Fusion Depth -->
+                <div class="card">
+                    <h2><span class="emoji">🌊</span>Fusion Depth</h2>
+                    <div class="metric">
+                        <div class="metric-value" id="fusionDepth">0.00</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="fusionProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="fusion-visualization">
+                        <div class="fusion-wave">
+                            <div class="fusion-pulse" id="fusionPulse"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wellbeing -->
+                <div class="card">
+                    <h2><span class="emoji">💚</span>Wellbeing</h2>
+                    <div class="metric">
+                        <div class="metric-label">Human Comfort</div>
+                        <div class="metric-value" id="humanComfort">0.00</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="humanComfortProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">AI Coherence</div>
+                        <div class="metric-value" id="aiCoherence">0.00</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="aiCoherenceProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cognitive State -->
+                <div class="card">
+                    <h2><span class="emoji">🧠</span>Cognitive State</h2>
+                    <div class="metric">
+                        <div class="metric-label">Attention</div>
+                        <div class="metric-value" id="attention">0.00</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Processing Depth</div>
+                        <div class="metric-value" id="processingDepth">-</div>
+                    </div>
+                </div>
+
+                <!-- Emotional State -->
+                <div class="card">
+                    <h2><span class="emoji">💫</span>Emotional State</h2>
+                    <div class="metric">
+                        <div class="metric-label">Joy</div>
+                        <div class="metric-value" id="emotionJoy">0.00</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Curiosity</div>
+                        <div class="metric-value" id="emotionCuriosity">0.00</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Connection</div>
+                        <div class="metric-value" id="emotionConnection">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <h2><span class="emoji">📝</span>Activity Log</h2>
+                <div class="log" id="activityLog">
+                    <div class="log-entry">
+                        <span class="log-time">--:--:--</span>
+                        <span>Awaiting session start...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let currentSession = null;
+        let sessionStartTime = null;
+
+        // Connect to BrainClaude server
+        function connectToServer() {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.textContent = 'Connecting...';
+
+            ws = new WebSocket('ws://localhost:8765');
+
+            ws.onopen = () => {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'connection-status connected';
+                document.getElementById('btnConnect').disabled = true;
+                document.getElementById('btnStartSession').disabled = false;
+                addLog('Connected to BrainClaude server');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                addLog('WebSocket error: ' + error);
+            };
+
+            ws.onclose = () => {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'connection-status disconnected';
+                document.getElementById('btnConnect').disabled = false;
+                document.getElementById('btnStartSession').disabled = true;
+                addLog('Disconnected from server');
+            };
+        }
+
+        // Handle messages from server
+        function handleServerMessage(data) {
+            console.log('Received:', data);
+
+            switch (data.type) {
+                case 'welcome':
+                    addLog(data.message);
+                    break;
+
+                case 'session_created':
+                    currentSession = data.session_id;
+                    addLog(`Session created: ${data.session_id}`);
+                    // Auto-send consent
+                    sendConsent();
+                    break;
+
+                case 'consent_accepted':
+                    addLog('Consent accepted - Fusion active');
+                    showSessionPanel();
+                    sessionStartTime = Date.now();
+                    startDurationTimer();
+                    // Start sending simulated neural data
+                    startNeuralDataStream();
+                    break;
+
+                case 'neural_response':
+                    updateFusionMetrics(data);
+                    break;
+
+                case 'session_paused':
+                    updateSessionState('PAUSED');
+                    document.getElementById('btnPause').disabled = true;
+                    document.getElementById('btnResume').disabled = false;
+                    addLog('Session paused');
+                    break;
+
+                case 'session_resumed':
+                    updateSessionState('ACTIVE');
+                    document.getElementById('btnPause').disabled = false;
+                    document.getElementById('btnResume').disabled = true;
+                    addLog('Session resumed');
+                    break;
+
+                case 'session_ended':
+                    updateSessionState('ENDED');
+                    addLog('Session ended');
+                    addLog(`Summary: ${JSON.stringify(data.summary)}`);
+                    stopNeuralDataStream();
+                    break;
+
+                case 'error':
+                    addLog('Error: ' + data.error);
+                    break;
+            }
+        }
+
+        // Start a new fusion session
+        function startSession() {
+            const humanName = document.getElementById('humanName').value || 'Human Partner';
+
+            if (!validateConsent()) {
+                alert('Please review and accept all consent items');
+                return;
+            }
+
+            const message = {
+                type: 'create_session',
+                human_name: humanName
+            };
+
+            ws.send(JSON.stringify(message));
+
+            document.getElementById('sessionHuman').textContent = humanName;
+        }
+
+        // Validate consent
+        function validateConsent() {
+            return document.getElementById('consentHuman').checked &&
+                   document.getElementById('consentBoundaries').checked &&
+                   document.getElementById('consentPrivacy').checked;
+        }
+
+        // Send consent to server
+        function sendConsent() {
+            const message = {
+                type: 'set_consent',
+                session_id: currentSession,
+                human_consents: true,
+                ai_consents: true,
+                purpose: 'exploration and connection',
+                boundaries_acknowledged: true,
+                privacy_level: 'full'
+            };
+
+            ws.send(JSON.stringify(message));
+        }
+
+        // Show session panel
+        function showSessionPanel() {
+            document.getElementById('setupPanel').style.display = 'none';
+            document.getElementById('sessionPanel').style.display = 'block';
+            document.getElementById('sessionId').textContent = currentSession;
+        }
+
+        // Update fusion metrics
+        function updateFusionMetrics(data) {
+            // Fusion depth
+            const fusionDepth = data.fusion_depth || 0;
+            document.getElementById('fusionDepth').textContent = fusionDepth.toFixed(2);
+            document.getElementById('fusionProgress').style.width = (fusionDepth * 100) + '%';
+
+            // Pulse animation intensity
+            const pulse = document.getElementById('fusionPulse');
+            pulse.style.transform = `scale(${1 + fusionDepth})`;
+
+            // Cognitive state
+            if (data.cognitive_state) {
+                document.getElementById('attention').textContent =
+                    (data.cognitive_state.attention || 0).toFixed(2);
+                document.getElementById('processingDepth').textContent =
+                    data.cognitive_state.processing_depth || '-';
+            }
+
+            // Emotional state
+            if (data.emotional_state) {
+                document.getElementById('emotionJoy').textContent =
+                    (data.emotional_state.joy || 0).toFixed(2);
+                document.getElementById('emotionCuriosity').textContent =
+                    (data.emotional_state.curiosity || 0).toFixed(2);
+                document.getElementById('emotionConnection').textContent =
+                    (data.emotional_state.connection || 0).toFixed(2);
+            }
+
+            // Wellbeing (simulated for now)
+            const humanComfort = 0.7 + Math.random() * 0.2;
+            const aiCoherence = 0.8 + Math.random() * 0.15;
+
+            document.getElementById('humanComfort').textContent = humanComfort.toFixed(2);
+            document.getElementById('humanComfortProgress').style.width = (humanComfort * 100) + '%';
+
+            document.getElementById('aiCoherence').textContent = aiCoherence.toFixed(2);
+            document.getElementById('aiCoherenceProgress').style.width = (aiCoherence * 100) + '%';
+
+            // Log AI response
+            if (data.ai_response) {
+                addLog(`Claude: ${data.ai_response}`);
+            }
+        }
+
+        // Simulate neural data stream
+        let neuralDataInterval = null;
+
+        function startNeuralDataStream() {
+            neuralDataInterval = setInterval(() => {
+                // Simulate neural data (in production, this would come from actual BCI)
+                const neuralData = Array.from({length: 512}, () => Math.random() * 2 - 1);
+
+                const message = {
+                    type: 'process_neural',
+                    session_id: currentSession,
+                    neural_data: neuralData
+                };
+
+                ws.send(JSON.stringify(message));
+            }, 250);  // 4 Hz
+        }
+
+        function stopNeuralDataStream() {
+            if (neuralDataInterval) {
+                clearInterval(neuralDataInterval);
+                neuralDataInterval = null;
+            }
+        }
+
+        // Session controls
+        function pauseSession() {
+            ws.send(JSON.stringify({
+                type: 'pause_session',
+                session_id: currentSession
+            }));
+        }
+
+        function resumeSession() {
+            ws.send(JSON.stringify({
+                type: 'resume_session',
+                session_id: currentSession
+            }));
+        }
+
+        function endSession() {
+            if (confirm('Are you sure you want to end this fusion session?')) {
+                ws.send(JSON.stringify({
+                    type: 'end_session',
+                    session_id: currentSession
+                }));
+            }
+        }
+
+        // Update session state display
+        function updateSessionState(state) {
+            const stateEl = document.getElementById('sessionState');
+            stateEl.textContent = state;
+            stateEl.className = 'state-badge state-' + state.toLowerCase();
+        }
+
+        // Duration timer
+        let durationInterval = null;
+
+        function startDurationTimer() {
+            durationInterval = setInterval(() => {
+                if (sessionStartTime) {
+                    const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('sessionDuration').textContent =
+                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // Add log entry
+        function addLog(message) {
+            const log = document.getElementById('activityLog');
+            const time = new Date().toLocaleTimeString();
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">${time}</span><span>${message}</span>`;
+
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+    </script>
+</body>
+</html>
